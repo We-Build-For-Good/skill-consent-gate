@@ -21,19 +21,19 @@ It provides a production-tested consent banner and script pattern that guarantee
 
 ### For Claude Code
 ```bash
-git clone https://github.com/webuildforgood/skill-consent-gate.git ~/.claude/skills/consent-gate
+git clone https://github.com/We-Build-For-Good/skill-consent-gate.git ~/.claude/skills/consent-gate
 ```
 
 ### For Cursor
 ```bash
 mkdir -p .cursor/skills
-git clone https://github.com/webuildforgood/skill-consent-gate.git .cursor/skills/consent-gate
+git clone https://github.com/We-Build-For-Good/skill-consent-gate.git .cursor/skills/consent-gate
 ```
 
 ### For Antigravity / Open Agent Skills
 ```bash
 mkdir -p .agents/skills
-git clone https://github.com/webuildforgood/skill-consent-gate.git .agents/skills/consent-gate
+git clone https://github.com/We-Build-For-Good/skill-consent-gate.git .agents/skills/consent-gate
 ```
 
 ---
