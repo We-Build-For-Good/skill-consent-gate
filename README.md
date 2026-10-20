@@ -1,51 +1,41 @@
-# Consent Gate: Zero-Tracker Privacy Architecture Protocol
+# Consent Gate
 
-> **An open-source AI engineering protocol from [We Build for Good](https://webuildforgood.com)**  
-> *True privacy engineering. Zero analytics before consent.*
+> An open-source agent skill from [We Build for Good](https://webuildforgood.com)
 
----
+A small vanilla JavaScript consent banner for Google Analytics 4 and Microsoft Clarity, plus a build step that validates your settings and a browser checklist to prove it on the live site.
 
-## Overview
+* No GA4 or Clarity tag is added to the page before the visitor clicks "Allow analytics".
+* "No thanks" and "Allow analytics" look the same and take one click each.
+* The choice is remembered for about 13 months.
+* A "Privacy choices" footer link lets visitors withdraw at any time: GA cookies are cleared and the page reloads.
+* Analytics only runs on the hostnames you list, never on localhost or previews.
 
-`consent-gate` is an open-source privacy architecture and operational protocol for web applications and marketing sites.
+See [SKILL.md](SKILL.md) for setup and the limits.
 
-It provides a production-tested consent banner and script pattern that guarantees:
-* Exactly zero analytics network requests fire before explicit user opt-in.
-* A prominent, working "No thanks" decline action.
-* Reversible consent via an automated footer "Privacy choices" button.
-* Automatic cookie clearing and reload upon withdrawal.
+## Quick start
 
----
+```bash
+git clone https://github.com/We-Build-For-Good/skill-consent-gate.git
+cd skill-consent-gate
+npm install && npm test
+cp examples/consent.config.json /path/to/site/consent.config.json   # then edit it
+node bin/build-consent-gate.mjs --config /path/to/site/consent.config.json --out /path/to/site/public/consent-gate.js
+```
 
-## Installation
+To use it as a Claude Code skill:
 
-### For Claude Code
 ```bash
 git clone https://github.com/We-Build-For-Good/skill-consent-gate.git ~/.claude/skills/consent-gate
 ```
 
-### For Cursor
-```bash
-mkdir -p .cursor/skills
-git clone https://github.com/We-Build-For-Good/skill-consent-gate.git .cursor/skills/consent-gate
-```
+## Contents
 
-### For Antigravity / Open Agent Skills
-```bash
-mkdir -p .agents/skills
-git clone https://github.com/We-Build-For-Good/skill-consent-gate.git .agents/skills/consent-gate
-```
-
----
-
-## Repository Contents
-
-* `SKILL.md`: Operational protocol for AI assistants installing and auditing consent gates.
-* `assets/consent-gate.template.js`: Production-ready vanilla JavaScript consent template.
-* `references/privacy-page-checklist.md`: Disclosure checklist for matching privacy policy pages.
-* `references/verification.md`: Step-by-step browser verification suite.
-
----
+* `SKILL.md`: instructions for an AI assistant installing or auditing the banner.
+* `assets/consent-gate.template.js`: the banner script (built with your settings by `bin/build-consent-gate.mjs`).
+* `examples/consent.config.json`: settings to copy.
+* `references/privacy-page-checklist.md`: what the privacy page must say.
+* `references/verification.md`: how to prove it works in a browser.
+* `test/`: jsdom tests.
 
 ## License
 

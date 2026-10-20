@@ -1,0 +1,20 @@
+{
+  "name": "@webuildforgood/skill-consent-gate",
+  "version": "2.0.0",
+  "description": "Consent banner that loads Google Analytics 4 and/or Microsoft Clarity only after the visitor opts in.",
+  "type": "module",
+  "bin": {
+    "build-consent-gate": "bin/build-consent-gate.mjs"
+  },
+  "scripts": {
+    "test": "node --test test/consent-gate.test.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "30.1.2"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "author": "We Build for Good",
+  "license": "MIT"
+}

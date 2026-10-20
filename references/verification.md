@@ -1,52 +1,42 @@
-# Verification protocol  -  empirical, in a browser, against the served site
+# Verification: prove it in a browser, on the deployed site
 
-Use the Claude Browser tools (`preview_start {url}`, `javascript_tool`,
-`read_network_requests`) or Playwright. Never verify from source alone:
-client-rendered pages hide both banners and tags from curl (this misled the
-2026-08-29 audit twice before browser reads corrected it). If checking a
-production-host-gated script locally, serve a production build and
-temporarily add the local host to `__PRODUCTION_HOSTS__` in a throwaway
-copy  -  never commit that edit.
+Use a real browser: Playwright, Puppeteer, or your agent's browser tools. Do not verify from source or `curl` alone: client-rendered pages hide both banners and tags from a plain HTTP fetch.
 
-Run in order, in a fresh browser context (no stored consent):
+The script does nothing off its `productionHosts`, so test the live site, or serve a production build locally and add that host to a throwaway config. Never commit that config.
 
-## 1. Pre-consent silence (the load-bearing check)
-Load the page, wait ~3s. Assert ZERO requests/script elements matching
-`googletagmanager|google-analytics|clarity.ms`. In-page check:
+Start each run in a fresh browser context (no stored choice).
+
+## 1. Nothing before consent (the check that matters most)
+
+Load the page and wait about 3 seconds. There must be no requests to `googletagmanager.com`, `google-analytics.com` or `clarity.ms`, and no such scripts in the page:
+
 ```js
-[...document.querySelectorAll('script[src]')].map(s=>s.src)
-  .filter(s=>/gtag|clarity|googletagmanager/i.test(s))   // must be []
+[...document.querySelectorAll('script[src]')].map(s => s.src)
+  .filter(s => /googletagmanager|google-analytics|clarity\.ms/i.test(s))   // must be []
 ```
-Also assert no `_ga*` cookies and no Clarity cookies exist.
 
-## 2. Banner present and honest
-The consent dialog is visible, names both processors, links the privacy
-page, and offers BOTH choices in one click each ("No thanks" must not be
-hidden behind a settings screen).
+There must be no `_ga` cookies and no Clarity cookies.
 
-## 3. Decline path
-Click "No thanks". Assert: banner gone; storage key holds
-`{"value":"denied",...}`; still zero analytics scripts; reload → banner does
-NOT reappear and still nothing loads.
+## 2. The banner is honest
 
-## 4. Accept path (clear storage first, or use a fresh context)
-Click "Allow analytics". Assert: both scripts inject
-(`clarity.ms/tag/<id>` and `googletagmanager.com/gtag/js?id=G-...`); storage
-key holds `granted` with a `decidedAt` timestamp; reload → tags load again
-with no banner.
+It is visible, names each configured processor, links the privacy page, and offers both choices with one click each.
 
-## 5. Withdrawal
-With consent granted and tags loaded, open the footer "Privacy choices"
-link, choose "No thanks". Assert: `_ga*` cookies cleared and the page
-reloads (the reload is deliberate  -  it ends Clarity's active recording).
+## 3. Decline
 
-## 6. Production-host gate
-On a preview/localhost hostname (unmodified script): script exits before
-doing anything  -  no banner, no tags. This keeps test traffic out of the
-evidence Mission Control will read.
+Click "No thanks". The banner closes, the storage key holds `{"value":"denied",...}`, and no analytics scripts load. Reload: the banner stays closed and nothing loads.
 
-## Recording the result
+## 4. Accept (fresh context)
 
-Write the per-check outcomes (with the observed script URLs and storage
-values) into the repo's tracker entry for the packet. One consented test
-visit will appear in the product's real analytics  -  note it.
+Click "Allow analytics". The configured scripts load (`clarity.ms/tag/<id>`, `googletagmanager.com/gtag/js?id=G-...`), the storage key holds `granted` with a `decidedAt` timestamp, and after a reload the tags load with no banner.
+
+## 5. Withdraw
+
+With consent granted, click "Privacy choices" in the footer and choose "No thanks". The `_ga` cookies are gone (check the parent domain too) and the page reloads. The reload is deliberate: it stops Clarity's recording.
+
+## 6. Non-production hosts
+
+On a preview URL or localhost with the real config, nothing happens: no banner, no tags. This keeps test traffic out of your analytics.
+
+## Record the result
+
+Write down each check's outcome with the script URLs and storage values you saw. Your consented test visit will appear in the real analytics; note it.

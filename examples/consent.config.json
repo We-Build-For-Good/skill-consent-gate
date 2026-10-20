@@ -1,0 +1,10 @@
+{
+  "prefix": "acme",
+  "productName": "Acme Notes",
+  "productionHosts": ["acme.example", "www.acme.example"],
+  "privacyUrl": "/privacy",
+  "storageKey": "acme_consent_v1",
+  "ga4MeasurementId": "G-ABC1234567",
+  "clarityProjectId": "abc123xyz",
+  "maskingSentence": "Note text and form fields are masked, so their contents are never recorded."
+}

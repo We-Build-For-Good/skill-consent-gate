@@ -1,51 +1,64 @@
 ---
 name: consent-gate
-description: Privacy-first analytics architecture protocol. Enforces zero third-party network requests before explicit user consent, provides an equal-prominence "No thanks" option, guarantees 13-month persistence, and provides a self-installing reversible footer link that clears cookies and reloads upon withdrawal.
+description: Add or audit a consent banner that loads Google Analytics 4 and/or Microsoft Clarity only after the visitor clicks "Allow analytics". Gives "No thanks" the same weight as "Allow", remembers the choice for about 13 months, and adds a "Privacy choices" footer link that withdraws consent, clears GA cookies and reloads. Use when adding analytics to a site or checking an existing banner.
 license: MIT
 metadata:
   author: We Build for Good
-  version: "1.0.0"
+  version: "2.0.0"
 ---
 
-# Consent Gate: Zero-Tracker Privacy Architecture Protocol
+# Consent Gate
 
-Most web cookie banners are deceptive theater: they fire third-party analytics tags into the browser before the user has made a choice, or hide the decline button inside complex sub-menus.
+Many cookie banners load analytics before the visitor chooses, or hide "decline" behind a settings screen. This skill installs a small vanilla JavaScript banner that does neither, and a browser checklist to prove it on the live site.
 
-The `consent-gate` protocol implements the gold standard of privacy engineering:
-* **Zero Network Requests Prior to Consent**: Pre-consent, the page makes zero network requests to third-party analytics or telemetry domains.
-* **Equal-Prominence "No Thanks"**: The decline action is as visible and accessible as the accept action.
-* **Persistent & Reversible**: Consent choices persist for 13 months, and visitors can withdraw consent at any time via a self-installing "Privacy choices" footer control, which immediately clears tracking cookies and reloads the page.
+## What the script does
 
----
+1. **Production hosts only.** It does nothing unless the page's hostname is in `productionHosts`, so localhost and preview deploys never send analytics.
+2. **Nothing before consent.** The GA4 and Clarity tags are added to the page only after "Allow analytics" is clicked (or a stored "granted" choice is found).
+3. **Equal choices.** "No thanks" and "Allow analytics" are the same size and style, side by side, one click each.
+4. **Remembered, then asked again.** The choice is stored in `localStorage` with a timestamp and expires after 390 days (about 13 months).
+5. **Withdrawal on every page.** A "Privacy choices" link is added next to the footer's privacy link (or to the footer, or to a footer it creates). Choosing "No thanks" there tells GA and Clarity consent is denied, expires `_ga` cookies on the host and its parent domains, and reloads so no tag keeps running.
 
-## The Four Non-Negotiable Guarantees
+It does **not** mask anything itself. If you use Clarity, add Clarity's masking attributes (for example `data-clarity-mask="true"`) to every input and container that holds personal or sensitive content, verify them in Clarity, and describe exactly that coverage in `maskingSentence`.
 
-1. **Host-Environment Gate**: The script checks the hostname and refuses to load analytics in local development (`localhost`, `127.0.0.1`) or staging preview environments.
-2. **Deterministic Opt-In**: Tags are dynamically injected into the DOM only after the user clicks "Allow".
-3. **Data Masking by Default**: For session recording tools, sensitive text inputs and user content containers must carry explicit privacy masking attributes (`data-clarity-mask="true"`).
-4. **Immediate Cookie Purge on Withdrawal**: Clicking "Revoke Consent" immediately clears client-side tracking cookies and triggers a clean reload.
+It only manages GA4 and Clarity. Other tags (PostHog, Meta pixel, Hotjar) are not handled; any tag loaded another way bypasses the gate.
 
----
+## Install
 
-## Installation Workflow
+1. Copy `examples/consent.config.json` into the project and fill it in:
 
-### Step 1: Configuration Parameters
-Gather the project parameters:
-* `PRODUCTION_HOSTS`: Allowed live hostnames (e.g. `'example.com'`).
-* `PRIVACY_URL`: Relative path to privacy policy (e.g. `'/privacy'`).
-* `STORAGE_KEY`: Versioned local storage key (e.g. `'app_consent_v1'`).
-* Analytics Stream / Project IDs (GA4, Clarity, or PostHog).
+   | Field | Meaning |
+   | :--- | :--- |
+   | `prefix` | Short lowercase id used for element ids and attributes, e.g. `acme` |
+   | `productName` | Shown in the banner title |
+   | `productionHosts` | Exact live hostnames, e.g. `["acme.com", "www.acme.com"]` |
+   | `privacyUrl` | Path or https URL of the privacy policy |
+   | `storageKey` | Versioned key, e.g. `acme_consent_v1` (change the version to ask everyone again) |
+   | `ga4MeasurementId` | `G-...`, or leave out |
+   | `clarityProjectId` | Clarity project id, or leave out (at least one of the two is required) |
+   | `maskingSentence` | Required with Clarity: what is masked, verified, not assumed |
 
-### Step 2: Include the Script
-Load the template script in the HTML `<head>` with `defer`:
-```html
-<script src="/consent-gate.js" defer></script>
-```
+2. Build the script (the build refuses invalid settings):
 
-### Step 3: Empirical Verification
-Run an automated verification sweep using headless browser tests:
-1. Load the page with cold storage: verify that zero network requests leave for analytics domains.
-2. Click "No thanks": verify the banner closes and no tags are injected.
-3. Reload: verify the refusal persists and the banner stays hidden.
-4. Click "Allow": verify tags inject dynamically and start collecting telemetry.
-5. Click "Privacy choices" in the footer: verify consent is revoked, cookies are cleared, and the page resets.
+   ```bash
+   node bin/build-consent-gate.mjs --config consent.config.json --out public/consent-gate.js
+   ```
+
+3. Load it in every page's `<head>`, and remove any GA4 or Clarity tag that was already in the HTML:
+
+   ```html
+   <script src="/consent-gate.js" defer></script>
+   ```
+
+4. Update the privacy page in the same change: `references/privacy-page-checklist.md`.
+
+5. Prove it on the deployed site in a real browser: `references/verification.md`. Do not sign off from the source alone.
+
+## Tests
+
+`npm install && npm test` runs the built script in jsdom: no tags before consent, decline, stored choices, expiry, accept, GA-only, the withdrawal link, cookie clearing on the parent domain, equal button styles, HTML escaping and config validation. jsdom does not run the real GA or Clarity code, so step 5 is still required.
+
+## What this skill does not do
+
+* It does not make a site legally compliant on its own. Your privacy policy, other tags, and server-side processing matter too.
+* It does not stop other scripts on the page from tracking.
